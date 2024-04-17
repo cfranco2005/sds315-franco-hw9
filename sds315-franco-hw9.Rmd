@@ -1,0 +1,168 @@
+---
+title: "HW9"
+author: "Chris Franco"
+date: "2024-04-15"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE)
+```
+
+```{r}
+library(tidyverse)
+library(mosaic)
+library(MatchIt)
+library(moderndive)
+```
+
+#### Problem 1 ####
+### Part A ###
+```{r}
+turnout <- read_csv("turnout.csv")
+
+
+```
+
+```{r}
+xtabs(~GOTV_call + voted1998, data = turnout) %>% 
+  prop.table(margin = 1)
+
+prop_test(voted1998 ~ GOTV_call, data = turnout, success = 1)
+
+```
+
+Before mathcing the data, 44% of those who did not receive a call to vote did end up voting in 1998 while 64% of people who did receive a call did vote in the 1998 election. 
+
+The z-sample test calculates a 95% confidence interval of nearly 26% to near 14% decrease which captures the true difference in porportion between those who did not receive a call to vote and did vote in the 1998 election and those who did receive a call and did vote in the 1998 election. 
+
+#### Part B ####
+```{r}
+turnout %>% 
+  ggplot(aes(x = factor(GOTV_call), y = AGE)) +
+  geom_boxplot()
+
+turnout %>% 
+  ggplot(aes(x = factor(voted1998), y = AGE)) +
+  geom_boxplot()
+```
+
+The two box plots show that age is a confounding variable that is getting in the way of making further conclusions between the relationship of getting a GOTV call and voting in the 1998 election. The median age of a person who received a call is around 60 while the median age of a person who did not recieve a call was a few years below 50 signifying aproximatley 10 year difference. 
+This descrepancy is also noticable in the response variable being those who voted in 1998. The median age for a voter in this data set who voted in 1998 is a little more than 50 years old while the median age of a non-voter is little more than 30 showing a sizable gap in difference.
+
+```{r}
+xtabs(~MAJORPTY + GOTV_call, data = turnout) %>% 
+  prop.table(margin = 2)
+
+xtabs(~MAJORPTY + voted1998, data = turnout) %>% 
+  prop.table(margin = 2)
+```
+
+This table shows how being a member of a major political party affects both the explanatory variable and the response variable. Nearly 80% of people registered in a major political party received a call to vote while only 75% of individuls who aren't registered with a political party in this data set received a call to vote.
+
+Nearky 80% of those who voted in 1998 were reigestered with a major political party compared to a 10 
+percent difference of those who did not vote in 1998 and were regestered with a major political party. 
+
+```{r}
+xtabs(~voted1996 + GOTV_call, data = turnout) %>% 
+  prop.table(margin = 2)
+
+xtabs(~voted1996 + voted1998, data = turnout) %>% 
+  prop.table(margin = 2)
+```
+
+71% of people in this data set who were called to go out and vote in the election voted in the 1996 while 53% of those who did not recieve a call voted in the 1996 election. 
+76% of those who voted in 1996 did so to in 1998 while 34% of indivdiauls who did not vote in 1998 voted in 1996. 
+
+
+
+#### Part C ####
+
+```{r}
+turnout_matched <- matchit(GOTV_call ~ voted1996 + AGE + MAJORPTY, data = turnout, ratio = 5) %>% 
+  match.data()
+
+turnout_matched %>% 
+  ggplot(aes(x = factor(GOTV_call), y = AGE)) +
+  geom_boxplot()
+
+xtabs(~MAJORPTY + GOTV_call, data = turnout_matched) %>% 
+  prop.table(margin = 2)
+
+xtabs(~voted1996 + GOTV_call, data = turnout_matched) %>% 
+  prop.table(margin = 2)
+```
+
+The matching to eliminate systematic differences caused by the three confounders of voting in 1996, age, and being regesteried in a political party seemed to have work. The median age for those the two groups who did and did not receive a government call is shared at around 60 years old. Regardless of if they were called or not, 80% of the subset were registered in a major political party. Lastly, the groups of those to recieve calls and those who did not receive calls shared the same proportion of 71% who voted in 1996. 
+
+
+```{r}
+xtabs(~GOTV_call + voted1998, data = turnout_matched) %>% 
+  prop.table(margin = 1)
+```
+
+Using the matched data, 57% of those who did not receive a call to vote did so while those who did receive a call to vote saw a 7% increase at 64%. 
+
+```{r}
+prop_test(voted1998 ~ GOTV_call, data = turnout_matched, success = 1)
+```
+
+
+The z-sample test calculates a 95% confidence interval of nearly 14% to near 0% decrease which captures the true difference in porportion between those who did not receive a call to vote and did vote in the 1998 election and those who did receive a call and did vote in the 1998 election. 
+
+### Problem 2 ###
+
+#### Part A ####
+```{r}
+solder <- read_csv("solder.csv")
+```
+
+```{r}
+solder %>% ggplot(aes(x= skips)) +
+  geom_histogram() +
+  facet_wrap(~Opening) +
+  theme_bw()
+```
+
+
+```{r}
+solder %>% ggplot(aes(x= skips)) +
+  geom_histogram() +
+  facet_wrap(~Solder) +
+  theme_bw()
+```
+
+
+
+############
+
+
+
+
+#### Part B and C ####
+```{r}
+solder_model = lm(skips ~ Solder + Opening + Solder:Opening, data = solder)
+
+get_regression_table(solder_model)
+```
+
+
+The baseline of the model is represnted by 'thick' for the sodder variable and 'L' for the solder gun opening variable and we are 95% confident that these will see a -0.628 to 1.415 increase in skips produced.
+
+We are 95% confident that thin solder has a main effect where the true estimand lies in the interval from 0.836 to 3.724 more skips produced in circuit boards on average. 
+
+We are 95% confident that using solder guns with a medium opening has a main effect where the true estimand lies in the interval from 0.962 to 3.851 more skips produced in circuit boards on average. 
+
+We are 95% confident that using solder guns with a small opening has a main effect where the true estimand lies in the interval from 3.862 to 6.571 more skips produced in circuit boards on average. 
+
+We are 95% confident that the using thin solder and a solder gun with a medium opening together produces an interaction where the true estimand lies in the interval from -2.782 to 1.302 more skips prduced on average.
+
+We are 95% confident that the using thin solder and a solder gun with a small opening together produces an interaction where the true estimand lies in the interval from 7.611 to 11.696 more skips prduced on average.
+
+#### Part D ####
+Based on table and the model created, I recommend AT&T to use the combination of a solder gun that has a medium opening as well as yields thin solder as it shows that the true average of skips produced on circuit board lies between -2 and 1 skips and the key part is they accomplish this together. 
